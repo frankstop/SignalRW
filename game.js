@@ -1,5 +1,6 @@
 // Signal Runner Web - Game Engine
 import { audio } from './audio.js';
+import { analytics } from './analytics.js';
 
 // Configuration
 const ARENA_WIDTH = 1800;
@@ -152,6 +153,7 @@ class Game {
     
     // Available upgrades selection for level-up menu
     this.levelUpOptions = [];
+    this.selectedUpgradeOrder = [];
     
     // Load high score
     try {
@@ -415,6 +417,9 @@ class Game {
     this.xpNeeded = 10;
     this.timeElapsed = 0;
     this.isNewHighScore = false;
+    this.selectedUpgradeOrder = [];
+    
+    analytics.startGame();
     
     // Reset Player
     this.player = {
@@ -563,6 +568,14 @@ class Game {
     
     // 6. Update HUD periodically
     this.updateHUD();
+    
+    // Update live session stats for early page exit tracking
+    analytics.updateSessionStats(
+      this.score,
+      this.timeElapsed,
+      this.kills,
+      this.selectedUpgradeOrder.join(', ')
+    );
   }
   
   updatePlayer(dt) {
@@ -1273,6 +1286,14 @@ class Game {
     const upgradeKey = this.levelUpOptions[index];
     if (!upgradeKey) return;
     
+    // Track selected upgrade order
+    this.selectedUpgradeOrder.push(upgradeKey);
+    analytics.trackUpgrade(
+      upgradeKey,
+      this.selectedUpgradeOrder.length,
+      this.selectedUpgradeOrder.join(', ')
+    );
+    
     const p = this.player;
     p.upgrades[upgradeKey]++;
     
@@ -1322,6 +1343,15 @@ class Game {
     audio.play('gameOver');
     this.triggerFlash('rgba(255, 0, 0, 0.6)', 0.6);
     this.screenShake = 20;
+    
+    // Send final stats to analytics
+    analytics.endGame(
+      this.score,
+      this.timeElapsed,
+      this.kills,
+      this.selectedUpgradeOrder.join(', '),
+      'died'
+    );
     
     // Check high score
     if (this.score > this.highScore) {
