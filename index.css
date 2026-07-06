@@ -1,0 +1,454 @@
+/* Design System for Signal Runner Web */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+  --bg-color: #050508;
+  --panel-bg: rgba(10, 10, 18, 0.7);
+  --border-color: rgba(0, 242, 254, 0.2);
+  --neon-blue: #00f2fe;
+  --neon-purple: #9b51e0;
+  --neon-green: #39ff14;
+  --neon-orange: #ff9f1c;
+  --neon-red: #ff3366;
+  --neon-yellow: #fffb00;
+  
+  --font-title: 'Orbitron', -apple-system, sans-serif;
+  --font-mono: 'Space Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: #ffffff;
+  font-family: var(--font-mono);
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+}
+
+/* CRT Screen Scanline Overlay Effect */
+.screen-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 1400px;
+  max-height: 900px;
+  aspect-ratio: 16 / 9;
+  background-color: #000000;
+  border: 4px solid #1a1a2e;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0, 242, 254, 0.15), inset 0 0 30px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+}
+
+.screen-wrapper::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  background-size: 100% 4px, 6px 100%;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+/* Game Interface */
+#game-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: #000000;
+}
+
+/* UI Panels Overlay (Glassmorphism + Neon Glow) */
+.ui-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 0 30px rgba(0, 242, 254, 0.1), inset 0 0 20px rgba(0, 242, 254, 0.05);
+  border-radius: 16px;
+  padding: 40px;
+  width: 90%;
+  max-width: 600px;
+  text-align: center;
+  animation: panel-glow 4s infinite alternate;
+}
+
+/* Title Screen Specific Styles */
+#title-screen .card {
+  max-width: 700px;
+  border-color: rgba(0, 242, 254, 0.3);
+}
+
+.glitch-title {
+  font-family: var(--font-title);
+  font-size: 3.5rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #ffffff;
+  letter-spacing: 4px;
+  margin-bottom: 10px;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px var(--neon-blue), 0 0 30px var(--neon-blue);
+  animation: title-flicker 3s infinite alternate;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: var(--neon-blue);
+  letter-spacing: 2px;
+  margin-bottom: 30px;
+  text-transform: uppercase;
+}
+
+.tagline {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 40px;
+  line-height: 1.6;
+}
+
+.controls-hint {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 30px;
+  text-align: left;
+  border-left: 3px solid var(--neon-blue);
+}
+
+.controls-hint div {
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+}
+
+.controls-hint div:last-child {
+  margin-bottom: 0;
+}
+
+.controls-hint span {
+  color: var(--neon-blue);
+  font-weight: bold;
+}
+
+.start-action {
+  font-family: var(--font-title);
+  font-size: 1.2rem;
+  color: #ffffff;
+  animation: pulse-opacity 1.5s infinite alternate;
+  letter-spacing: 1px;
+}
+
+/* Pause and Death Screen Styles */
+.panel-title {
+  font-family: var(--font-title);
+  font-size: 2.2rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 25px;
+  color: var(--neon-blue);
+  text-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+}
+
+#gameover-screen .panel-title {
+  color: var(--neon-red);
+  text-shadow: 0 0 10px rgba(255, 51, 102, 0.5);
+  animation: red-pulse 2s infinite alternate;
+}
+
+.stat-group {
+  display: flex;
+  justify-content: space-around;
+  margin: 30px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 20px 0;
+}
+
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  font-family: var(--font-title);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.new-record {
+  color: var(--neon-yellow);
+  font-size: 0.9rem;
+  margin-top: 15px;
+  letter-spacing: 1px;
+  animation: title-flicker 2s infinite alternate;
+}
+
+/* Level Up Upgrade Selector Styles */
+#levelup-screen .card {
+  max-width: 650px;
+  border-color: rgba(155, 81, 224, 0.3);
+  box-shadow: 0 0 35px rgba(155, 81, 224, 0.15);
+}
+
+.upgrade-title {
+  font-family: var(--font-title);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--neon-purple);
+  text-shadow: 0 0 10px rgba(155, 81, 224, 0.5);
+  margin-bottom: 25px;
+}
+
+.upgrade-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.upgrade-item {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 15px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.upgrade-item:hover {
+  background: rgba(155, 81, 224, 0.08);
+  border-color: var(--neon-purple);
+  box-shadow: 0 0 15px rgba(155, 81, 224, 0.2);
+  transform: translateY(-2px);
+}
+
+.upgrade-key {
+  font-family: var(--font-title);
+  font-weight: 900;
+  font-size: 1.2rem;
+  color: var(--neon-purple);
+  background: rgba(155, 81, 224, 0.15);
+  border: 1px solid var(--neon-purple);
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 20px;
+  flex-shrink: 0;
+}
+
+.upgrade-info {
+  flex: 1;
+}
+
+.upgrade-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #ffffff;
+  margin-bottom: 3px;
+}
+
+.upgrade-desc {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Screen Flash/Hit overlays */
+#flash-overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+  transition: opacity 0.05s ease-out;
+}
+
+/* Retro Cabinet Bezel Footer */
+.bezel-footer {
+  background-color: #0c0c16;
+  border-top: 1px solid #1a1a2e;
+  padding: 12px 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  z-index: 11;
+}
+
+.footer-section {
+  display: flex;
+  gap: 20px;
+}
+
+.footer-key {
+  color: var(--neon-blue);
+  font-weight: bold;
+}
+
+/* Keyframes */
+@keyframes panel-glow {
+  0% { border-color: rgba(0, 242, 254, 0.2); }
+  50% { border-color: rgba(0, 242, 254, 0.35); }
+  100% { border-color: rgba(0, 242, 254, 0.2); }
+}
+
+@keyframes pulse-opacity {
+  0% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+@keyframes title-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 10px var(--neon-blue));
+  }
+  20%, 24%, 55% {
+    opacity: 0.7;
+    filter: none;
+  }
+}
+
+@keyframes red-pulse {
+  0% { border-color: rgba(255, 51, 102, 0.2); }
+  50% { border-color: rgba(255, 51, 102, 0.5); }
+  100% { border-color: rgba(255, 51, 102, 0.2); }
+}
+
+/* HUD Overlay Styles */
+.hud-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 15px 25px;
+  z-index: 3;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.hud-item {
+  font-family: var(--font-title);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+  letter-spacing: 1px;
+}
+
+.hud-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+  margin-right: 5px;
+}
+
+.score-item {
+  font-size: 1.3rem;
+  color: var(--neon-blue);
+  text-shadow: 0 0 8px rgba(0, 242, 254, 0.4);
+  letter-spacing: 2px;
+}
+
+.xp-bar-container {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.xp-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: var(--neon-purple);
+  box-shadow: 0 0 8px var(--neon-purple);
+  transition: width 0.15s ease-out;
+}
+
+.hud-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: 2px;
+}
+
+#hud-dash-val {
+  font-size: 0.8rem;
+  transition: color 0.2s ease;
+}
+
+#hud-mute-state {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
