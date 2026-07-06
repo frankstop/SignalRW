@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signal Runner - Retro Vector Survival Arena</title>
+  <meta name="description" content="Keep the signal alive. Destroy glitches, upgrade your bandwidth, and escape the breakdown in this vector survival game.">
+  <script type="module" crossorigin src="/SignalRW/assets/index-B4-wyEUp.js"></script>
+  <link rel="stylesheet" crossorigin href="/SignalRW/assets/index-mgaa1Bf9.css">
+</head>
+<body>
+  <div class="screen-wrapper">
+    <div id="game-container">
+      
+      <!-- HUD Overlay -->
+      <div class="hud-container">
+        <div class="hud-top">
+          <div class="hud-item">
+            <span class="hud-label">HP</span>
+            <span id="hud-hp-val">3/3</span>
+          </div>
+          <div class="hud-item score-item">
+            <span id="hud-score-val">000000</span>
+          </div>
+          <div class="hud-item">
+            <span id="hud-level-val">LV.1</span>
+          </div>
+        </div>
+        <div class="xp-bar-container">
+          <div id="hud-xp-fill" class="xp-bar-fill"></div>
+        </div>
+        <div class="hud-bottom">
+          <div id="hud-dash-val" class="hud-item">SPACE DASH READY</div>
+          <div style="display: flex; gap: 15px; pointer-events: auto;">
+            <span id="hud-pause-btn" class="hud-item interactive-hud">PAUSE</span>
+            <span id="hud-mute-state" class="hud-item interactive-hud">SOUND ON</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Touch Controls -->
+      <div id="mobile-controls" class="hidden-on-desktop">
+        <div id="joystick-left" class="joystick-container">
+          <div class="joystick-base">
+            <div id="joystick-left-knob" class="joystick-knob"></div>
+          </div>
+        </div>
+        <div id="joystick-right" class="joystick-container">
+          <div class="joystick-base">
+            <div id="joystick-right-knob" class="joystick-knob"></div>
+          </div>
+        </div>
+        <div class="mobile-actions">
+          <button id="btn-dash" class="mobile-btn">DASH</button>
+          <button id="btn-lock" class="mobile-btn">LOCK</button>
+        </div>
+      </div>
+
+      <!-- Flash Overlay -->
+      <div id="flash-overlay"></div>
+
+      <!-- Canvas -->
+      <canvas id="game-canvas"></canvas>
+
+      <!-- 1. Title Screen -->
+      <div id="title-screen" class="ui-panel">
+        <div class="card">
+          <h1 class="glitch-title">Signal Runner</h1>
+          <p class="subtitle">Survival Vector Arena</p>
+          <p class="tagline">THE LINE IS BROKEN. KEEP THE SIGNAL ALIVE.</p>
+          
+          <div class="controls-hint">
+            <div><span>W A S D</span> or <span>LEFT JOYSTICK</span> to MOVE</div>
+            <div><span>ARROW KEYS</span> or <span>RIGHT JOYSTICK</span> to FIRE</div>
+            <div><span>SHIFT</span> or <span>LOCK BUTTON</span> to AIM-LOCK</div>
+            <div><span>SPACE</span> or <span>DASH BUTTON</span> to DASH</div>
+            <div><span>P / ESC / PAUSE</span> to PAUSE  |  <span>M</span> to MUTE</div>
+          </div>
+          
+          <p class="start-action">PRESS SPACE / ENTER OR TAP TO CONNECT</p>
+        </div>
+      </div>
+
+      <!-- 2. Pause Screen -->
+      <div id="pause-screen" class="ui-panel hidden">
+        <div class="card">
+          <h2 class="panel-title">System Paused</h2>
+          <p class="tagline">Signal connection is currently on hold.</p>
+          
+          <div class="controls-hint" style="text-align: center; margin-bottom: 0;">
+            <p style="margin-bottom: 10px;">PRESS <span style="color: var(--neon-purple);">P</span> OR <span style="color: var(--neon-purple);">ESC</span> TO RESUME</p>
+            <p>PRESS <span style="color: var(--neon-purple);">M</span> TO MUTE/UNMUTE</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Level Up Screen -->
+      <div id="levelup-screen" class="ui-panel hidden">
+        <div class="card">
+          <h2 class="upgrade-title">Signal Amplified</h2>
+          <p class="tagline">Choose an upgrade module to optimize the signal.</p>
+          
+          <div class="upgrade-list">
+            <div id="upgrade-1" class="upgrade-item">
+              <div class="upgrade-key">1</div>
+              <div class="upgrade-info">
+                <div class="upgrade-name">Module Name</div>
+                <div class="upgrade-desc">Module Description</div>
+              </div>
+            </div>
+            <div id="upgrade-2" class="upgrade-item">
+              <div class="upgrade-key">2</div>
+              <div class="upgrade-info">
+                <div class="upgrade-name">Module Name</div>
+                <div class="upgrade-desc">Module Description</div>
+              </div>
+            </div>
+            <div id="upgrade-3" class="upgrade-item">
+              <div class="upgrade-key">3</div>
+              <div class="upgrade-info">
+                <div class="upgrade-name">Module Name</div>
+                <div class="upgrade-desc">Module Description</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Game Over Screen -->
+      <div id="gameover-screen" class="ui-panel hidden">
+        <div class="card">
+          <h2 class="panel-title">Signal Defeated</h2>
+          <p id="final-kills" class="subtitle" style="color: var(--neon-red); margin-bottom: 20px;">0 GLITCHES DELETED</p>
+          
+          <div class="stat-group">
+            <div class="stat-box">
+              <span class="stat-label">Final Score</span>
+              <span id="final-score" class="stat-value">000000</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Duration</span>
+              <span id="final-time" class="stat-value">0s</span>
+            </div>
+          </div>
+          
+          <p id="new-record-label" class="new-record hidden">★ NEW LOCAL HIGH RECORD AMPLIFIED ★</p>
+          
+          <p class="start-action" style="margin-top: 40px; color: var(--neon-red);">PRESS R, SPACE, OR ENTER TO REBOOT</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Retro Cabinet Bezel Footer -->
+    <div class="bezel-footer">
+      <div>[STATUS: CONNECTED]</div>
+      <div class="footer-section">
+        <div><span class="footer-key">WASD</span> MOVE</div>
+        <div><span class="footer-key">ARROWS</span> AIM + FIRE</div>
+        <div><span class="footer-key">SPACE</span> DASH</div>
+        <div><span class="footer-key">SHIFT</span> AIM-LOCK</div>
+      </div>
+      <div>[SECTOR: 7-G]</div>
+    </div>
+
+  </div>
+
+</body>
+</html>
