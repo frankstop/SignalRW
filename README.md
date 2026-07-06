@@ -22,16 +22,16 @@ A high-fidelity HTML5 Web Port of the retro-vector survival arena game **Signal 
 
 ## 🕹️ Controls
 
-| Control | Action |
-| :--- | :--- |
-| **W A S D** | Move Character |
-| **ARROW KEYS** | Aim & Fire (8 directions) |
-| **SHIFT** | Aim-Lock (strafes character while keeping firing direction) |
-| **SPACE** | Dash (provides brief invulnerability, damages glitches) |
-| **1, 2, 3** | Choose Upgrades (during Level Up screen) |
-| **P / ESC** | Pause Game |
-| **M** | Mute / Unmute Audio |
-| **F** | Toggle Fullscreen |
+| Control (Desktop) | Control (Mobile) | Action |
+| :--- | :--- | :--- |
+| **W A S D** | **LEFT JOYSTICK** (Drag) | Move Character |
+| **ARROW KEYS** | **RIGHT JOYSTICK** (Drag) | Aim & Fire |
+| **SHIFT** | **LOCK BUTTON** (Toggle) | Aim-Lock (strafes player while keeping firing direction) |
+| **SPACE** | **DASH BUTTON** (Tap) | Dash (brief invulnerability, leaves damaging trail) |
+| **1, 2, 3** | **TAP OPTIONS** (Tap Cards) | Choose Upgrades (during Level Up screen) |
+| **P / ESC** | **PAUSE BUTTON** (Tap HUD) | Pause / Resume Game |
+| **M** | **MUTE BUTTON** (Tap HUD) | Mute / Unmute Audio |
+| **F** | N/A | Toggle Fullscreen |
 
 ---
 
