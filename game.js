@@ -121,6 +121,22 @@ class Game {
     this.lastAim = { x: 0, y: -1 }; // last aim vector (defaults to up)
     this.aimLocked = false;
     
+    // Touch joystick state
+    this.touchControls = {
+      left: {
+        active: false,
+        touchId: null,
+        startPos: { x: 0, y: 0 },
+        input: { x: 0, y: 0 }
+      },
+      right: {
+        active: false,
+        touchId: null,
+        startPos: { x: 0, y: 0 },
+        input: { x: 0, y: 0 }
+      }
+    };
+    
     // Timers
     this.lastTime = 0;
     this.lastShotAt = 0;
@@ -202,6 +218,155 @@ class Game {
     document.getElementById('upgrade-1').addEventListener('click', () => this.chooseUpgrade(0));
     document.getElementById('upgrade-2').addEventListener('click', () => this.chooseUpgrade(1));
     document.getElementById('upgrade-3').addEventListener('click', () => this.chooseUpgrade(2));
+
+    // Setup Virtual Joysticks
+    const leftJoy = document.getElementById('joystick-left');
+    const leftKnob = document.getElementById('joystick-left-knob');
+    const rightJoy = document.getElementById('joystick-right');
+    const rightKnob = document.getElementById('joystick-right-knob');
+    
+    const handleJoystickStart = (joyEl, knobEl, stateObj, touchEvent) => {
+      touchEvent.preventDefault();
+      const rect = joyEl.getBoundingClientRect();
+      const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      
+      const touch = touchEvent.changedTouches[0];
+      stateObj.active = true;
+      stateObj.touchId = touch.identifier;
+      stateObj.startPos = center;
+    };
+    
+    const handleJoystickMove = (joyEl, knobEl, stateObj, touchEvent) => {
+      if (!stateObj.active) return;
+      
+      let activeTouch = null;
+      for (let i = 0; i < touchEvent.touches.length; i++) {
+        if (touchEvent.touches[i].identifier === stateObj.touchId) {
+          activeTouch = touchEvent.touches[i];
+          break;
+        }
+      }
+      
+      if (!activeTouch) return;
+      
+      const dx = activeTouch.clientX - stateObj.startPos.x;
+      const dy = activeTouch.clientY - stateObj.startPos.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const maxRadius = 40; // Max drag distance
+      
+      let finalDx = dx;
+      let finalDy = dy;
+      
+      if (dist > maxRadius) {
+        finalDx = (dx / dist) * maxRadius;
+        finalDy = (dy / dist) * maxRadius;
+      }
+      
+      knobEl.style.transform = `translate(calc(-50% + ${finalDx}px), calc(-50% + ${finalDy}px))`;
+      
+      stateObj.input.x = finalDx / maxRadius;
+      stateObj.input.y = finalDy / maxRadius;
+    };
+    
+    const handleJoystickEnd = (joyEl, knobEl, stateObj, touchEvent) => {
+      let isEnded = false;
+      for (let i = 0; i < touchEvent.changedTouches.length; i++) {
+        if (touchEvent.changedTouches[i].identifier === stateObj.touchId) {
+          isEnded = true;
+          break;
+        }
+      }
+      
+      if (!isEnded) return;
+      
+      stateObj.active = false;
+      stateObj.touchId = null;
+      stateObj.input = { x: 0, y: 0 };
+      knobEl.style.transform = 'translate(-50%, -50%)';
+    };
+    
+    if (leftJoy && leftKnob) {
+      leftJoy.addEventListener('touchstart', (e) => handleJoystickStart(leftJoy, leftKnob, this.touchControls.left, e), { passive: false });
+      window.addEventListener('touchmove', (e) => handleJoystickMove(leftJoy, leftKnob, this.touchControls.left, e), { passive: false });
+      window.addEventListener('touchend', (e) => handleJoystickEnd(leftJoy, leftKnob, this.touchControls.left, e));
+      window.addEventListener('touchcancel', (e) => handleJoystickEnd(leftJoy, leftKnob, this.touchControls.left, e));
+    }
+    
+    if (rightJoy && rightKnob) {
+      rightJoy.addEventListener('touchstart', (e) => handleJoystickStart(rightJoy, rightKnob, this.touchControls.right, e), { passive: false });
+      window.addEventListener('touchmove', (e) => handleJoystickMove(rightJoy, rightKnob, this.touchControls.right, e), { passive: false });
+      window.addEventListener('touchend', (e) => handleJoystickEnd(rightJoy, rightKnob, this.touchControls.right, e));
+      window.addEventListener('touchcancel', (e) => handleJoystickEnd(rightJoy, rightKnob, this.touchControls.right, e));
+    }
+    
+    // Tap buttons triggers
+    const btnDash = document.getElementById('btn-dash');
+    if (btnDash) {
+      btnDash.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.keys['Space'] = true;
+      });
+      btnDash.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        this.keys['Space'] = false;
+      });
+    }
+    
+    const btnLock = document.getElementById('btn-lock');
+    if (btnLock) {
+      btnLock.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.aimLocked = !this.aimLocked;
+        if (this.aimLocked) {
+          btnLock.classList.add('locked');
+        } else {
+          btnLock.classList.remove('locked');
+        }
+      });
+    }
+
+    // Screen touch clicks
+    this.titleScreen.addEventListener('click', () => {
+      if (this.phase === 'title') this.startGame();
+    });
+    this.titleScreen.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (this.phase === 'title') this.startGame();
+    });
+    
+    this.gameoverScreen.addEventListener('click', () => {
+      if (this.phase === 'gameOver') this.startGame();
+    });
+    this.gameoverScreen.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (this.phase === 'gameOver') this.startGame();
+    });
+
+    // Interactive HUD pause and mute
+    const pauseBtn = document.getElementById('hud-pause-btn');
+    if (pauseBtn) {
+      const togglePause = () => {
+        if (this.phase === 'playing') this.pauseGame();
+        else if (this.phase === 'paused') this.resumeGame();
+      };
+      pauseBtn.addEventListener('click', togglePause);
+      pauseBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        togglePause();
+      });
+    }
+    
+    const muteBtn = document.getElementById('hud-mute-state');
+    if (muteBtn) {
+      const toggleMute = () => {
+        this.toggleMute();
+      };
+      muteBtn.addEventListener('click', toggleMute);
+      muteBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        toggleMute();
+      });
+    }
   }
   
   resizeCanvas() {
@@ -436,23 +601,28 @@ class Game {
       return; // Skip normal movement while dashing
     }
     
-    // Keyboard movement input vector
-    let mx = 0;
-    let my = 0;
-    
-    if (this.keys['KeyW']) my -= 1;
-    if (this.keys['KeyS']) my += 1;
-    if (this.keys['KeyA']) mx -= 1;
-    if (this.keys['KeyD']) mx += 1;
-    
-    // Normalize movement vector
-    if (mx !== 0 || my !== 0) {
-      const len = Math.sqrt(mx * mx + my * my);
-      p.vx = (mx / len) * p.moveSpeed;
-      p.vy = (my / len) * p.moveSpeed;
+    // Touch controls movement or keyboard input movement
+    if (this.touchControls.left.active) {
+      p.vx = this.touchControls.left.input.x * p.moveSpeed;
+      p.vy = this.touchControls.left.input.y * p.moveSpeed;
     } else {
-      p.vx = 0;
-      p.vy = 0;
+      let mx = 0;
+      let my = 0;
+      
+      if (this.keys['KeyW']) my -= 1;
+      if (this.keys['KeyS']) my += 1;
+      if (this.keys['KeyA']) mx -= 1;
+      if (this.keys['KeyD']) mx += 1;
+      
+      // Normalize movement vector
+      if (mx !== 0 || my !== 0) {
+        const len = Math.sqrt(mx * mx + my * my);
+        p.vx = (mx / len) * p.moveSpeed;
+        p.vy = (my / len) * p.moveSpeed;
+      } else {
+        p.vx = 0;
+        p.vy = 0;
+      }
     }
     
     // Dash initiation
@@ -496,32 +666,45 @@ class Game {
   updateWeapons(timestamp) {
     const p = this.player;
     
-    // Aim / Shoot vector from arrows
-    let ax = 0;
-    let ay = 0;
-    
-    if (this.keys['ArrowUp']) ay -= 1;
-    if (this.keys['ArrowDown']) ay += 1;
-    if (this.keys['ArrowLeft']) ax -= 1;
-    if (this.keys['ArrowRight']) ax += 1;
-    
-    const isAiming = (ax !== 0 || ay !== 0);
-    this.aimLocked = this.keys['ShiftLeft'] || this.keys['ShiftRight'];
+    // Use touch controls or keyboard input for aim-shooting
+    const isShiftHeld = !!(this.keys['ShiftLeft'] || this.keys['ShiftRight']);
+    const activeLock = this.aimLocked || isShiftHeld;
     
     let shootDir = null;
     
-    if (isAiming) {
-      // Update last aim direction
-      const len = Math.sqrt(ax * ax + ay * ay);
-      this.lastAim = { x: ax / len, y: ay / len };
+    if (this.touchControls.right.active) {
+      const rx = this.touchControls.right.input.x;
+      const ry = this.touchControls.right.input.y;
+      const dist = Math.sqrt(rx * rx + ry * ry);
       
-      if (!this.aimLocked) {
-        shootDir = this.lastAim;
+      if (dist > 0.25) {
+        this.lastAim = { x: rx / dist, y: ry / dist };
+        if (!activeLock) {
+          shootDir = this.lastAim;
+        }
+      }
+    } else {
+      let ax = 0;
+      let ay = 0;
+      
+      if (this.keys['ArrowUp']) ay -= 1;
+      if (this.keys['ArrowDown']) ay += 1;
+      if (this.keys['ArrowLeft']) ax -= 1;
+      if (this.keys['ArrowRight']) ax += 1;
+      
+      const isAiming = (ax !== 0 || ay !== 0);
+      
+      if (isAiming) {
+        const len = Math.sqrt(ax * ax + ay * ay);
+        this.lastAim = { x: ax / len, y: ay / len };
+        
+        if (!activeLock) {
+          shootDir = this.lastAim;
+        }
       }
     }
     
-    // If shift aim-lock is held, we continue shooting in the lastAim direction automatically
-    if (this.aimLocked) {
+    if (activeLock) {
       shootDir = this.lastAim;
     }
     

@@ -30,7 +30,28 @@
         </div>
         <div class="hud-bottom">
           <div id="hud-dash-val" class="hud-item">SPACE DASH READY</div>
-          <div id="hud-mute-state" class="hud-item">SOUND ON</div>
+          <div style="display: flex; gap: 15px; pointer-events: auto;">
+            <span id="hud-pause-btn" class="hud-item interactive-hud">PAUSE</span>
+            <span id="hud-mute-state" class="hud-item interactive-hud">SOUND ON</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Touch Controls -->
+      <div id="mobile-controls" class="hidden-on-desktop">
+        <div id="joystick-left" class="joystick-container">
+          <div class="joystick-base">
+            <div id="joystick-left-knob" class="joystick-knob"></div>
+          </div>
+        </div>
+        <div id="joystick-right" class="joystick-container">
+          <div class="joystick-base">
+            <div id="joystick-right-knob" class="joystick-knob"></div>
+          </div>
+        </div>
+        <div class="mobile-actions">
+          <button id="btn-dash" class="mobile-btn">DASH</button>
+          <button id="btn-lock" class="mobile-btn">LOCK</button>
         </div>
       </div>
 
@@ -48,14 +69,14 @@
           <p class="tagline">THE LINE IS BROKEN. KEEP THE SIGNAL ALIVE.</p>
           
           <div class="controls-hint">
-            <div><span>W A S D</span> to MOVE</div>
-            <div><span>ARROW KEYS</span> to AIM & FIRE</div>
-            <div><span>SHIFT</span> to AIM-LOCK (strafe while firing)</div>
-            <div><span>SPACE</span> to DASH (damages glitches & makes you invulnerable)</div>
-            <div><span>P or ESC</span> to PAUSE  |  <span>M</span> to MUTE  |  <span>F</span> to FULLSCREEN</div>
+            <div><span>W A S D</span> or <span>LEFT JOYSTICK</span> to MOVE</div>
+            <div><span>ARROW KEYS</span> or <span>RIGHT JOYSTICK</span> to FIRE</div>
+            <div><span>SHIFT</span> or <span>LOCK BUTTON</span> to AIM-LOCK</div>
+            <div><span>SPACE</span> or <span>DASH BUTTON</span> to DASH</div>
+            <div><span>P / ESC / PAUSE</span> to PAUSE  |  <span>M</span> to MUTE</div>
           </div>
           
-          <p class="start-action">PRESS SPACE OR ENTER TO CONNECT</p>
+          <p class="start-action">PRESS SPACE / ENTER OR TAP TO CONNECT</p>
         </div>
       </div>
 
