@@ -622,4 +622,35 @@ canvas {
   color: var(--neon-purple) !important;
 }
 
+/* Gamepad Toast Notification */
+.gamepad-toast {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: rgba(5, 5, 8, 0.95);
+  border: 1px solid var(--neon-blue);
+  box-shadow: 0 0 15px rgba(0, 242, 254, 0.4), inset 0 0 10px rgba(0, 242, 254, 0.1);
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  text-align: center;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+}
+
+.gamepad-toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.gamepad-toast.disconnect {
+  border-color: var(--neon-red);
+  box-shadow: 0 0 15px rgba(255, 51, 102, 0.4), inset 0 0 10px rgba(255, 51, 102, 0.1);
+}
+
 

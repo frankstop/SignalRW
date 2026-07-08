@@ -122,6 +122,17 @@ class Game {
     this.lastAim = { x: 0, y: -1 }; // last aim vector (defaults to up)
     this.aimLocked = false;
     
+    // Gamepad state
+    this.gamepadConnected = false;
+    this.prevGamepadButtons = [];
+    this.gamepadInput = {
+      move: { x: 0, y: 0 },
+      aim: { x: 0, y: 0 },
+      dash: false,
+      lockDash: false
+    };
+    this.toastTimeout = null;
+    
     // Touch joystick state
     this.touchControls = {
       left: {
@@ -170,6 +181,20 @@ class Game {
   }
   
   setupEvents() {
+    window.addEventListener('gamepadconnected', (e) => {
+      console.log('Gamepad connected:', e.gamepad);
+      this.gamepadConnected = true;
+      this.showGamepadToast(e.gamepad.id);
+      this.updateUpgradeKeys();
+    });
+    
+    window.addEventListener('gamepaddisconnected', (e) => {
+      console.log('Gamepad disconnected:', e.gamepad);
+      this.gamepadConnected = false;
+      this.showGamepadToast(null);
+      this.updateUpgradeKeys();
+    });
+
     window.addEventListener('keydown', (e) => {
       this.keys[e.code] = true;
       
@@ -371,6 +396,166 @@ class Game {
     }
   }
   
+  pollGamepad(dt, timestamp) {
+    const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+    let gp = null;
+    for (let i = 0; i < gamepads.length; i++) {
+      if (gamepads[i]) {
+        gp = gamepads[i];
+        break;
+      }
+    }
+    
+    if (!gp) {
+      if (this.gamepadConnected) {
+        this.gamepadConnected = false;
+        this.showGamepadToast(null);
+        this.updateUpgradeKeys();
+      }
+      return;
+    }
+    
+    if (!this.gamepadConnected) {
+      this.gamepadConnected = true;
+      this.showGamepadToast(gp.id);
+      this.updateUpgradeKeys();
+    }
+    
+    // Helper function for button state queries
+    const btnPressed = (index) => gp.buttons[index] && gp.buttons[index].pressed;
+    const btnJustPressed = (index) => {
+      const pressed = gp.buttons[index] && gp.buttons[index].pressed;
+      const prev = this.prevGamepadButtons[index];
+      return pressed && !prev;
+    };
+    
+    // 1. Process movement axes (Left Stick + D-pad)
+    const deadzone = 0.15;
+    let mx = gp.axes[0];
+    let my = gp.axes[1];
+    if (Math.abs(mx) < deadzone) mx = 0;
+    if (Math.abs(my) < deadzone) my = 0;
+    
+    // D-Pad override
+    if (gp.buttons[12] && gp.buttons[12].pressed) my = -1; // Up
+    if (gp.buttons[13] && gp.buttons[13].pressed) my = 1;  // Down
+    if (gp.buttons[14] && gp.buttons[14].pressed) mx = -1; // Left
+    if (gp.buttons[15] && gp.buttons[15].pressed) mx = 1;  // Right
+    
+    if (mx !== 0 || my !== 0) {
+      const len = Math.sqrt(mx * mx + my * my);
+      const scale = len > 1 ? 1 / len : 1;
+      this.gamepadInput.move.x = mx * scale;
+      this.gamepadInput.move.y = my * scale;
+    } else {
+      this.gamepadInput.move.x = 0;
+      this.gamepadInput.move.y = 0;
+    }
+    
+    // 2. Process aiming axes (Right Stick)
+    let ax = gp.axes[2];
+    let ay = gp.axes[3];
+    if (Math.abs(ax) < deadzone) ax = 0;
+    if (Math.abs(ay) < deadzone) ay = 0;
+    this.gamepadInput.aim.x = ax;
+    this.gamepadInput.aim.y = ay;
+    
+    // 3. Process discrete buttons based on active phase
+    if (this.phase === 'title') {
+      if (btnJustPressed(0) || btnJustPressed(9)) { // A button or Start
+        this.startGame();
+      }
+    } else if (this.phase === 'gameOver') {
+      if (btnJustPressed(0) || btnJustPressed(9)) { // A button or Start
+        this.startGame();
+      }
+    } else if (this.phase === 'paused') {
+      if (btnJustPressed(9) || btnJustPressed(8)) { // Start or Back
+        this.resumeGame();
+      }
+      if (btnJustPressed(3)) { // Y Button toggles mute
+        this.toggleMute();
+      }
+    } else if (this.phase === 'levelUp') {
+      if (btnJustPressed(0)) { // A selects option 1
+        this.chooseUpgrade(0);
+        this.gamepadInput.lockDash = true;
+      } else if (btnJustPressed(1)) { // B selects option 2
+        this.chooseUpgrade(1);
+        this.gamepadInput.lockDash = true;
+      } else if (btnJustPressed(2)) { // X selects option 3
+        this.chooseUpgrade(2);
+        this.gamepadInput.lockDash = true;
+      }
+    } else if (this.phase === 'playing') {
+      if (btnJustPressed(9) || btnJustPressed(8)) { // Start or Back to Pause
+        this.pauseGame();
+      }
+      if (btnJustPressed(3)) { // Y Button toggles mute
+        this.toggleMute();
+      }
+      if (btnJustPressed(2)) { // X toggles Aim-Lock
+        this.aimLocked = !this.aimLocked;
+        const btnLock = document.getElementById('btn-lock');
+        if (btnLock) {
+          if (this.aimLocked) btnLock.classList.add('locked');
+          else btnLock.classList.remove('locked');
+        }
+      }
+    }
+    
+    // 4. Dash button detection
+    // Dash triggers on A (button 0), RB (button 5), or RT (button 7)
+    const dashPressed = btnPressed(0) || btnPressed(5) || (gp.buttons[7] && gp.buttons[7].value > 0.1);
+    if (!dashPressed) {
+      this.gamepadInput.lockDash = false;
+    }
+    this.gamepadInput.dash = dashPressed && !this.gamepadInput.lockDash;
+    
+    // Store current buttons for next frame's rising edge detection
+    this.prevGamepadButtons = gp.buttons.map(b => b.pressed);
+  }
+
+  showGamepadToast(gamepadId) {
+    const toast = document.getElementById('gamepad-toast');
+    if (!toast) return;
+    
+    if (gamepadId) {
+      let name = 'Controller';
+      if (gamepadId.toLowerCase().includes('xbox')) {
+        name = 'Xbox Controller';
+      } else if (gamepadId.toLowerCase().includes('playstation') || gamepadId.toLowerCase().includes('wireless controller')) {
+        name = 'PlayStation Controller';
+      } else {
+        const match = gamepadId.match(/^([^(]+)/);
+        if (match) name = match[1].trim();
+      }
+      
+      toast.innerText = `🎮 ${name.toUpperCase()} CONNECTED`;
+      toast.classList.remove('disconnect');
+      toast.classList.add('show');
+    } else {
+      toast.innerText = `🔌 CONTROLLER DISCONNECTED`;
+      toast.classList.add('disconnect');
+      toast.classList.add('show');
+    }
+    
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+    this.toastTimeout = setTimeout(() => {
+      toast.classList.remove('show');
+    }, 3000);
+  }
+
+  updateUpgradeKeys() {
+    if (this.phase !== 'levelUp') return;
+    for (let i = 0; i < 3; i++) {
+      const keyNode = document.querySelector(`#upgrade-${i + 1} .upgrade-key`);
+      if (keyNode) {
+        keyNode.innerText = this.gamepadConnected ? ['A', 'B', 'X'][i] : (i + 1);
+      }
+    }
+  }
+  
   resizeCanvas() {
     // Keep internal game rendering crisp (High DPI)
     const dpr = window.devicePixelRatio || 1;
@@ -528,6 +713,8 @@ class Game {
     const dt = Math.min(100, timestamp - this.lastTime) / 1000; // clamp dt to avoid giant jumps
     this.lastTime = timestamp;
     
+    this.pollGamepad(dt, timestamp);
+    
     if (this.phase === 'playing') {
       this.update(dt, timestamp);
     }
@@ -614,8 +801,11 @@ class Game {
       return; // Skip normal movement while dashing
     }
     
-    // Touch controls movement or keyboard input movement
-    if (this.touchControls.left.active) {
+    // Gamepad movement, Touch controls movement, or keyboard input movement
+    if (this.gamepadConnected && (Math.abs(this.gamepadInput.move.x) > 0.01 || Math.abs(this.gamepadInput.move.y) > 0.01)) {
+      p.vx = this.gamepadInput.move.x * p.moveSpeed;
+      p.vy = this.gamepadInput.move.y * p.moveSpeed;
+    } else if (this.touchControls.left.active) {
       p.vx = this.touchControls.left.input.x * p.moveSpeed;
       p.vy = this.touchControls.left.input.y * p.moveSpeed;
     } else {
@@ -639,7 +829,7 @@ class Game {
     }
     
     // Dash initiation
-    if (this.keys['Space'] && p.dashCooldownTimer <= 0) {
+    if ((this.keys['Space'] || (this.gamepadConnected && this.gamepadInput.dash)) && p.dashCooldownTimer <= 0) {
       // Dash in the direction of movement, or aim if not moving
       let dx = p.vx;
       let dy = p.vy;
@@ -679,13 +869,40 @@ class Game {
   updateWeapons(timestamp) {
     const p = this.player;
     
-    // Use touch controls or keyboard input for aim-shooting
+    // Use touch controls or keyboard input or gamepad input for aim-shooting
+    let isGamepadLockPressed = false;
+    if (this.gamepadConnected) {
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+      let gp = null;
+      for (let i = 0; i < gamepads.length; i++) {
+        if (gamepads[i]) {
+          gp = gamepads[i];
+          break;
+        }
+      }
+      if (gp) {
+        isGamepadLockPressed = (gp.buttons[4] && gp.buttons[4].pressed) || 
+                               (gp.buttons[6] && gp.buttons[6].value > 0.1);
+      }
+    }
+
     const isShiftHeld = !!(this.keys['ShiftLeft'] || this.keys['ShiftRight']);
-    const activeLock = this.aimLocked || isShiftHeld;
+    const activeLock = this.aimLocked || isShiftHeld || isGamepadLockPressed;
     
     let shootDir = null;
     
-    if (this.touchControls.right.active) {
+    if (this.gamepadConnected && (Math.abs(this.gamepadInput.aim.x) > 0.2 || Math.abs(this.gamepadInput.aim.y) > 0.2)) {
+      const rx = this.gamepadInput.aim.x;
+      const ry = this.gamepadInput.aim.y;
+      const dist = Math.sqrt(rx * rx + ry * ry);
+      
+      if (dist > 0.25) {
+        this.lastAim = { x: rx / dist, y: ry / dist };
+        if (!activeLock) {
+          shootDir = this.lastAim;
+        }
+      }
+    } else if (this.touchControls.right.active) {
       const rx = this.touchControls.right.input.x;
       const ry = this.touchControls.right.input.y;
       const dist = Math.sqrt(rx * rx + ry * ry);
@@ -1278,6 +1495,7 @@ class Game {
         element.style.display = 'none';
       }
     }
+    this.updateUpgradeKeys();
   }
   
   chooseUpgrade(index) {
