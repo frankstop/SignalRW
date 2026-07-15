@@ -1,4 +1,4 @@
-const CACHE_NAME = 'signal-runner-v2';
+const CACHE_NAME = 'signal-runner-v3';
 const ASSETS = [
   './',
   './index.html',

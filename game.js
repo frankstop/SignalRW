@@ -757,12 +757,7 @@ class Game {
     this.updateHUD();
     
     // Update live session stats for early page exit tracking
-    analytics.updateSessionStats(
-      this.score,
-      this.timeElapsed,
-      this.kills,
-      this.selectedUpgradeOrder.join(', ')
-    );
+    analytics.updateSessionStats(this.score);
   }
   
   updatePlayer(dt) {
@@ -1506,12 +1501,7 @@ class Game {
     
     // Track selected upgrade order
     this.selectedUpgradeOrder.push(upgradeKey);
-    analytics.trackUpgrade(
-      upgradeKey,
-      this.selectedUpgradeOrder.length,
-      this.selectedUpgradeOrder.join(', ')
-    );
-    
+
     const p = this.player;
     p.upgrades[upgradeKey]++;
     
@@ -1563,13 +1553,7 @@ class Game {
     this.screenShake = 20;
     
     // Send final stats to analytics
-    analytics.endGame(
-      this.score,
-      this.timeElapsed,
-      this.kills,
-      this.selectedUpgradeOrder.join(', '),
-      'died'
-    );
+    analytics.endGame(this.score);
     
     // Check high score
     if (this.score > this.highScore) {
